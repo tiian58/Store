@@ -1,17 +1,16 @@
+import sqlite3
 from flask import Flask, request, jsonify
 
-from models.product import Product
+from database.products import Product
 
 app = Flask(__name__)
 
-#products = {
-#     1:{"id":1, "Name": "Coca-Cola", "Amount": 5},
-#     2:{"id":2, "Name": "Cookie", "Amount": 1}
-#}
-products = [
-     {"Id":1, "Name": "Coca-Cola", "Amount": 5},
-     {"Id":2, "Name": "Cookie", "Amount": 1}
-]
+conn = sqlite3.connect('database/database.db')
+
+def get_db_connection():
+    conn = sqlite3.connect('database/database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.route("/", methods=["GET"])
 def welcome():
@@ -19,10 +18,11 @@ def welcome():
 
 @app.route("/products", methods=["GET"])
 def get_products():
-    data = products
-    if data:
-        return jsonify(data), 200
-    elif data == False:
+    products = Product.get_products(get_db_connection())
+    products = [list(row) for row in products]
+    if products:
+        return jsonify(products), 200
+    elif products == False:
         return jsonify({'message': 'Error'}), 500
     else:
         return jsonify({'products': {}})
