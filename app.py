@@ -1,7 +1,8 @@
 import sqlite3
 from flask import Flask, request, jsonify
 
-from database.products import Product
+from database.productsDB import ProductsDB
+from models.product import Product
 
 app = Flask(__name__)
 
@@ -18,7 +19,7 @@ def welcome():
 
 @app.route("/products", methods=["GET"])
 def get_products():
-    products = Product.get_products(get_db_connection())
+    products = ProductsDB.get_products()
     products = [list(row) for row in products]
     if products:
         return jsonify(products), 200
@@ -29,10 +30,12 @@ def get_products():
 
 @app.route("/products", methods=["POST"])
 def insert_products():
-    products.append(request.get_json())
-    if products:
-        return jsonify(products), 201
-    elif products == False:
+    body = request.get_json()
+    prod = Product(body['name'], body['price'])
+    if prod:
+        ProductsDB.insert_product(prod)
+        return jsonify(prod.name), 201
+    elif prod == False:
         return jsonify({'message': 'Error'}), 500
     else:
         return jsonify({'products': {}})
